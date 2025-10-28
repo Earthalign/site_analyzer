@@ -1,0 +1,7 @@
+{
+    "url": "https://kajakowo.net/pl/32-gielda-kajakowa",
+    "sendgrid_api_key": "",
+    "email_sender": "projectswitek@gmail.com",
+    "email_receiver": "projectswitek@gmail.com",
+    "check_interval_minutes": 10
+}
