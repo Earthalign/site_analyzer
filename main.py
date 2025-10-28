@@ -1,16 +1,15 @@
 from bs4 import BeautifulSoup
-
 import requests
 import json
-import schedule
-import time
 import os
 
+# --- Environment variables from GitHub Secrets ---
+SENDGRID_API_KEY = os.environ["SENDGRID_API_KEY"]
+EMAIL_SENDER = os.environ["EMAIL_SENDER"]
+EMAIL_RECEIVER = os.environ["EMAIL_RECEIVER"]
+URL = "https://kajakowo.net/pl/32-gielda-kajakowa"
 
-def load_config():
-    with open("config.json", "r") as f:
-        return json.load(f)
-
+# --- Scraping function ---
 def get_offers(url):
     """Scrape offers from Kajakowo.net"""
     response = requests.get(url)
@@ -25,6 +24,7 @@ def get_offers(url):
         offers.append((title, link))
     return offers
 
+# --- Send email via SendGrid ---
 def send_email(sender, api_key, receiver, new_offers):
     html = "<h3>New offers:</h3><ul>"
     for title, link in new_offers:
@@ -36,7 +36,7 @@ def send_email(sender, api_key, receiver, new_offers):
             {"to": [{"email": receiver}]}
         ],
         "from": {"email": sender},
-        "subject": "Hey! There is 🚣 New offers on Kajakowo.net",
+        "subject": "Hey! 🚣 New offers on Kajakowo.net",
         "content": [{"type": "text/html", "value": html}]
     }
 
@@ -54,17 +54,13 @@ def send_email(sender, api_key, receiver, new_offers):
     else:
         print(f"❌ SendGrid error: {response.status_code} {response.text}")
 
+# --- Main check ---
 def check_for_updates():
-    config = load_config()
-    url = config["url"]
-    api_key = os.getenv("SENDGRID_API_KEY", config.get("sendgrid_api_key", ""))
-    sender = config["email_sender"]
-    receiver = config["email_receiver"]
-
     print("🔍 Checking for new offers...")
     try:
-        new_data = get_offers(url)
+        new_data = get_offers(URL)
 
+        # Load old offers from file (optional)
         if os.path.exists("offers.json"):
             with open("offers.json", "r") as f:
                 old_data = json.load(f)
@@ -76,25 +72,17 @@ def check_for_updates():
 
         if new_offers:
             print(f"✨ Found {len(new_offers)} new offer(s). Sending email...")
-            send_email(sender, api_key, receiver, new_offers)
+            send_email(EMAIL_SENDER, SENDGRID_API_KEY, EMAIL_RECEIVER, new_offers)
         else:
             print("😴 No new offers found.")
 
+        # Save current offers for next run
         with open("offers.json", "w") as f:
             json.dump(new_data, f)
 
     except Exception as e:
         print("❌ Error:", e)
 
-def main():
-    config = load_config()
-    interval = config.get("check_interval_minutes", 10)
-    schedule.every(interval).minutes.do(check_for_updates)
-
-    print(f"🚀 Monitor started. Checking every {interval} minutes...")
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
-
+# --- Run once ---
 if __name__ == "__main__":
-    main()
+    check_for_updates()
