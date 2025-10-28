@@ -3,19 +3,17 @@ import requests
 import json
 import os
 
-# --- Environment variables from GitHub Secrets ---
 SENDGRID_API_KEY = os.environ["SENDGRID_API_KEY"]
 EMAIL_SENDER = os.environ["EMAIL_SENDER"]
 EMAIL_RECEIVER = os.environ["EMAIL_RECEIVER"]
 URL = "https://kajakowo.net/pl/32-gielda-kajakowa"
 
-# --- Scraping function ---
-def get_offers(url):
+def get_offers(url: str) -> list[tuple[str, str]]:
     """Scrape offers from Kajakowo.net"""
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
-    offers = []
+    offers: list[tuple[str, str]] = []
     for product in soup.select(".product-title a"):
         title = product.text.strip()
         link = product["href"]
@@ -24,8 +22,7 @@ def get_offers(url):
         offers.append((title, link))
     return offers
 
-# --- Send email via SendGrid ---
-def send_email(sender, api_key, receiver, new_offers):
+def send_email(sender: str, api_key: str, receiver: str, new_offers: list[tuple[str, str]]) -> None:
     html = f"<h3>New offers in <a href='{URL}'>{URL}</a></h3><ul>"
     for title, link in new_offers:
         html += f"<li><a href='{link}'>{title}</a></li>"
@@ -54,18 +51,16 @@ def send_email(sender, api_key, receiver, new_offers):
     else:
         print(f"❌ SendGrid error: {response.status_code} {response.text}")
 
-# --- Main check ---
-def check_for_updates():
+def check_for_updates() -> None:
     print("🔍 Checking for new offers...")
     try:
         new_data = get_offers(URL)
 
-        # Load old offers from file (optional)
         if os.path.exists("offers.json"):
             with open("offers.json", "r") as f:
-                old_data = json.load(f)
+                old_data: list[tuple[str, str]] = json.load(f)
         else:
-            old_data = []
+            old_data: list[tuple[str, str]] = []
 
         old_titles = {title for title, _ in old_data}
         new_offers = [offer for offer in new_data if offer[0] not in old_titles]
@@ -76,13 +71,11 @@ def check_for_updates():
         else:
             print("😴 No new offers found.")
 
-        # Save current offers for next run
         with open("offers.json", "w") as f:
             json.dump(new_data, f)
 
     except Exception as e:
         print("❌ Error:", e)
 
-# --- Run once ---
 if __name__ == "__main__":
     check_for_updates()
