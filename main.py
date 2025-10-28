@@ -74,8 +74,14 @@ def check_for_updates() -> None:
         with open("offers.json", "w") as f:
             json.dump(new_data, f)
 
+    except requests.RequestException as e:
+        print(f"❌ Network error: {e}")
+    except json.JSONDecodeError as e:
+        print(f"❌ JSON error: {e}")
+    except KeyError as e:
+        print(f"❌ Missing environment variable: {e}")
     except Exception as e:
-        print("❌ Error:", e)
+        print(f"❌ Unexpected error: {e}")
 
 if __name__ == "__main__":
     check_for_updates()
