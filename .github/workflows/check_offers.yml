@@ -1,0 +1,35 @@
+name: Kajakowo Monitor
+
+# Run the workflow on a schedule (every hour) and allow manual runs
+on:
+  schedule:
+    - cron: '0 * * * *'   # every hour at minute 0
+  workflow_dispatch:       # allows manual trigger
+
+jobs:
+  check_offers:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository
+      - uses: actions/checkout@v3
+
+      # Step 2: Setup Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Run Kajakowo monitor
+      - name: Run Kajak monitor
+        env:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
+        run: python main.py
