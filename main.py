@@ -26,7 +26,7 @@ def get_offers(url):
 
 # --- Send email via SendGrid ---
 def send_email(sender, api_key, receiver, new_offers):
-    html = "<h3>New offers:</h3><ul>"
+    html = f"<h3>New offers in <a href='{URL}'>{URL}</a></h3><ul>"
     for title, link in new_offers:
         html += f"<li><a href='{link}'>{title}</a></li>"
     html += "</ul>"
